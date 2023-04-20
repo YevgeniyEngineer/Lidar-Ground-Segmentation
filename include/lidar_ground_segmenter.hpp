@@ -9,6 +9,7 @@
 #include <execution>
 #include <memory>
 #include <numeric>
+#include <optional>
 #include <stdexcept>
 #include <vector>
 
@@ -49,33 +50,30 @@ class LidarGroundSegmenter final
                          double sensor_height_offset_m = 1.73, double distance_threshold_m = 0.3,
                          double initial_seed_threshold_m = 0.6);
 
-    const std::uint8_t &number_of_iterations() const noexcept;
-    std::uint8_t &number_of_iterations() noexcept;
-    void number_of_iterations(std::uint8_t number_of_iterations);
+    std::uint8_t numberOfIterations() const noexcept;
+    void numberOfIterations(std::uint8_t number_of_iterations) noexcept;
 
-    const std::uint8_t &number_of_planar_partitions() const noexcept;
-    std::uint8_t &number_of_planar_partitions() noexcept;
-    void number_of_planar_partitions(std::uint8_t number_of_planar_partitions);
+    std::uint8_t numberOfPlanarPartitions() const noexcept;
+    void numberOfPlanarPartitions(std::uint8_t number_of_planar_partitions) noexcept;
 
-    const std::uint16_t &number_of_lowest_point_representatives() const noexcept;
-    std::uint16_t &number_of_lowest_point_representatives() noexcept;
-    void number_of_lowest_point_representatives(std::uint16_t number_of_lowest_point_representatives);
+    std::uint16_t numberOfLowestPointRepresentatives() const noexcept;
+    void numberOfLowestPointRepresentatives(std::uint16_t number_of_lowest_point_representatives) noexcept;
 
-    const double &sensor_height_offset_m() const noexcept;
-    double &sensor_height_offset_m() noexcept;
-    void sensor_height_offset_m(double sensor_height_offset_m);
+    double sensorHeightOffsetM() const noexcept;
+    void sensorHeightOffsetM(double sensor_height_offset_m) noexcept;
 
-    const double &distance_threshold_m() const noexcept;
-    double &distance_threshold_m() noexcept;
-    void distance_threshold_m(double distance_threshold_m);
+    double distanceThresholdM() const noexcept;
+    void distanceThresholdM(double distance_threshold_m) noexcept;
 
-    const double &initial_seed_threshold_m() const noexcept;
-    double &initial_seed_threshold_m() noexcept;
-    void initial_seed_threshold_m(double initial_seed_threshold_m);
+    double initialSeedThresholdM() const noexcept;
+    void initialSeedThresholdM(double initial_seed_threshold_m) noexcept;
 
-    Plane3D estimatePlane(const Eigen::MatrixXd &points);
+    std::optional<Plane3D> estimatePlane(const std::vector<IndexedPoint3D> &points) noexcept;
 
   private:
+    void formPlanarPartitions(const std::vector<IndexedPoint3D> &points,
+                              std::vector<std::vector<IndexedPoint3D>> &segments);
+
     std::uint8_t number_of_iterations_;
     std::uint8_t number_of_planar_partitions_;
     std::uint16_t number_of_lowest_point_representatives_;

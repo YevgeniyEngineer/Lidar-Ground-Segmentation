@@ -28,97 +28,87 @@ LidarGroundSegmenter::LidarGroundSegmenter(const std::vector<Point3D> &points, s
     }
 }
 
-const std::uint8_t &LidarGroundSegmenter::number_of_iterations() const noexcept
+std::uint8_t LidarGroundSegmenter::numberOfIterations() const noexcept
 {
     return number_of_iterations_;
 }
-std::uint8_t &LidarGroundSegmenter::number_of_iterations() noexcept
-{
-    return number_of_iterations_;
-}
-void LidarGroundSegmenter::number_of_iterations(std::uint8_t number_of_iterations)
+void LidarGroundSegmenter::numberOfIterations(std::uint8_t number_of_iterations) noexcept
 {
     number_of_iterations_ = number_of_iterations;
 }
 
-const std::uint8_t &LidarGroundSegmenter::number_of_planar_partitions() const noexcept
+std::uint8_t LidarGroundSegmenter::numberOfPlanarPartitions() const noexcept
 {
     return number_of_planar_partitions_;
 }
-std::uint8_t &LidarGroundSegmenter::number_of_planar_partitions() noexcept
-{
-    return number_of_planar_partitions_;
-}
-void LidarGroundSegmenter::number_of_planar_partitions(std::uint8_t number_of_planar_partitions)
+void LidarGroundSegmenter::numberOfPlanarPartitions(std::uint8_t number_of_planar_partitions) noexcept
 {
     number_of_planar_partitions_ = number_of_planar_partitions;
 }
 
-const std::uint16_t &LidarGroundSegmenter::number_of_lowest_point_representatives() const noexcept
+std::uint16_t LidarGroundSegmenter::numberOfLowestPointRepresentatives() const noexcept
 {
     return number_of_lowest_point_representatives_;
 }
-std::uint16_t &LidarGroundSegmenter::number_of_lowest_point_representatives() noexcept
-{
-    return number_of_lowest_point_representatives_;
-}
-void LidarGroundSegmenter::number_of_lowest_point_representatives(std::uint16_t number_of_lowest_point_representatives)
+void LidarGroundSegmenter::numberOfLowestPointRepresentatives(
+    std::uint16_t number_of_lowest_point_representatives) noexcept
 {
     number_of_lowest_point_representatives_ = number_of_lowest_point_representatives;
 }
 
-const double &LidarGroundSegmenter::sensor_height_offset_m() const noexcept
+double LidarGroundSegmenter::sensorHeightOffsetM() const noexcept
 {
     return sensor_height_offset_m_;
 }
-double &LidarGroundSegmenter::sensor_height_offset_m() noexcept
-{
-    return sensor_height_offset_m_;
-}
-void LidarGroundSegmenter::sensor_height_offset_m(double sensor_height_offset_m)
+void LidarGroundSegmenter::sensorHeightOffsetM(double sensor_height_offset_m) noexcept
 {
     sensor_height_offset_m_ = sensor_height_offset_m;
 }
 
-const double &LidarGroundSegmenter::distance_threshold_m() const noexcept
+double LidarGroundSegmenter::distanceThresholdM() const noexcept
 {
     return distance_threshold_m_;
 }
-double &LidarGroundSegmenter::distance_threshold_m() noexcept
-{
-    return distance_threshold_m_;
-}
-void LidarGroundSegmenter::distance_threshold_m(double distance_threshold_m)
+void LidarGroundSegmenter::distanceThresholdM(double distance_threshold_m) noexcept
 {
     distance_threshold_m_ = distance_threshold_m;
 }
 
-const double &LidarGroundSegmenter::initial_seed_threshold_m() const noexcept
+double LidarGroundSegmenter::initialSeedThresholdM() const noexcept
 {
     return initial_seed_threshold_m_;
 }
-double &LidarGroundSegmenter::initial_seed_threshold_m() noexcept
-{
-    return initial_seed_threshold_m_;
-}
-void LidarGroundSegmenter::initial_seed_threshold_m(double initial_seed_threshold_m)
+void LidarGroundSegmenter::initialSeedThresholdM(double initial_seed_threshold_m) noexcept
 {
     initial_seed_threshold_m_ = initial_seed_threshold_m;
 }
 
-Plane3D LidarGroundSegmenter::estimatePlane(const Eigen::MatrixXd &points)
+std::optional<Plane3D> LidarGroundSegmenter::estimatePlane(const std::vector<IndexedPoint3D> &points) noexcept
 {
-    const auto number_of_points = points.rows();
+    // Need at least 3 points to form a plane
+    const std::size_t number_of_points = points.size();
     if (number_of_points < 3)
     {
-        throw std::runtime_error("Cannot estimate plane parameters for less than three points");
+        return {};
+    }
+
+    // Create an Eigen::MatrixXd with the same dimensions as the input vector
+    Eigen::MatrixXd point_matrix(number_of_points, 3);
+
+    // Copy data from the vector to the matrix
+    for (std::size_t row = 0; row < number_of_points; ++row)
+    {
+        const auto &point = points[row];
+        point_matrix(row, 0) = point.x;
+        point_matrix(row, 1) = point.y;
+        point_matrix(row, 2) = point.z;
     }
 
     // Compute centroid of the points
-    Eigen::RowVector3d centroid = points.rowwise().mean();
+    Eigen::RowVector3d centroid = point_matrix.colwise().mean();
 
     // Compute the deviation of points from the centroid
-    Eigen::MatrixXd deviation = points.colwise() - centroid.transpose();
+    Eigen::MatrixXd deviation = point_matrix.rowwise() - centroid;
 
     // Compute the SVD of the deviation matrix
     Eigen::JacobiSVD<Eigen::MatrixXd> svd(deviation, Eigen::ComputeFullV);
@@ -132,7 +122,11 @@ Plane3D LidarGroundSegmenter::estimatePlane(const Eigen::MatrixXd &points)
     double nz = normal(2);
     double d = -normal.dot(centroid);
 
-    return Plane3D{nx, ny, nz, d};
+    return std::make_optional<Plane3D>(nx, ny, nz, d);
 }
 
+void LidarGroundSegmenter::formPlanarPartitions(const std::vector<IndexedPoint3D> &points,
+                                                std::vector<std::vector<IndexedPoint3D>> &segments)
+{
+}
 } // namespace segmentation
